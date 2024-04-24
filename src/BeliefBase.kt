@@ -86,6 +86,7 @@ class BeliefBase {
     /**
      * Since we have added a new belief, we need to determine whether there are any new entailments.
      * If we know that (A||B) and !A, then B is a child of both (A||B) and !A
+     * My intuition is to clear every entailment and start over, but we can discuss this.
      */
     private fun redoEntailments(){
         clearAllEntailments()
