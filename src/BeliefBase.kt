@@ -2,22 +2,23 @@
 /**
  * This one needs to call the Java code
  */
-fun toCNF(expression: String): String{
-
+private fun toCNF(expression: String): String{
+    //TODO: Call external library. Supposedly hard, so dont bother doing it yourself
     return TODO()
 }
 /**
  * Checks whether two beliefs contradict eachother
  */
-fun contradicts(belief1: Belief, belief2: Belief): Boolean{
-    //https://sat.inesc-id.pt/~ines/cp07.pdf This for some advanced shit. Maybe we should just iterate over every combination first
+private fun contradicts(belief1: Belief, belief2: Belief): Boolean{
+    //https://sat.inesc-id.pt/~ines/cp07.pdf This for some advanced shit.
+    // Maybe we should just iterate over every combination first
     return TODO()
 }
 
 /**
  * This function is basically confirmation basis, algorithmically
  */
-fun getWorth(belief:Belief): Int{
+private fun getWorth(belief:Belief): Int{
     //TODO: We should ideally determine this based on number of entailments, but this works for now
     return belief.addedNumber
 }
@@ -44,20 +45,55 @@ class Belief(originalExpression: String) {
     //we automatically assume that newer beliefs are true so it follows that older beliefs are less true
     var addedNumber: Int = 0
 
-    val entailments: MutableList<Belief> = mutableListOf() //All beliefs that directly follow from this belief
-    val parents: MutableList<Belief> = mutableListOf() //The opposite. Not sure if we want this
+    //All beliefs that directly follow from this belief. This is the "Children"
+    val entailments: MutableList<Belief> = mutableListOf()
+
+    val parents: MutableList<Belief> = mutableListOf() //The corresponding parents. Not sure if we want this
 }
 /**
  * The big boy
  */
 class BeliefBase {
-    private var numberOfBeliefs: Int = 0
-    private val beliefs: MutableSet<Belief> = TODO()
+    private var numberOfBeliefs: Int = 0 //Keeps track of total number of beliefs that have been added. Works as a "timestamp"
 
-    private fun addBelief(belief: Belief) {
-        belief.addedNumber = numberOfBeliefs
+    //I think every base belief should be added to this, but not entailments. E.G if we know that (A||B) and !B,
+    //then (A||B), !B are added, but A is added as a child of (A||B) AND !B. Then, if we later get told that B,
+    //it will easy to remove A from all its parents (which is why we store the parents).
+    //My current idea is to essentially delete all children and then redo entailment calculations. Slower, but simpler.
+    //
+    // TODO: Discuss all this or make a decision
+    //There is no reason to ever remove a belief unless we find its direct contradiction, since redundant information
+    //may be un-redundated when presented with new info
+    private val beliefs: MutableSet<Belief> = mutableSetOf() //Only holds base beliefs. None of these have parents
+
+    private fun addBelief(beliefToAdd: Belief) {
+        beliefToAdd.addedNumber = numberOfBeliefs
         numberOfBeliefs++
-        beliefs.add(belief)
+        beliefs.add(beliefToAdd)
+        redoEntailments()
+    }
+
+    private fun clearAllEntailments(){
+        //Hugely inefficient, but I don't see the issue. Simpler than going through every child and determining if it's still true
+        for (belief in beliefs){
+            belief.entailments.clear()
+            if (belief.parents.isNotEmpty()){
+                throw Exception("Base belief had parent")
+            }
+        }
+    }
+
+    /**
+     * Since we have added a new belief, we need to determine whether there are any new entailments.
+     * If we know that (A||B) and !A, then B is a child of both (A||B) and !A
+     */
+    private fun redoEntailments(){
+        clearAllEntailments()
+        determineEntailments()
+    }
+
+    private fun determineEntailments(){
+        TODO() //This is where all the actual hard code goes
     }
 
     /**
@@ -78,6 +114,20 @@ class BeliefBase {
         } while (contradictingBeliefs.size!=0)
         //The absolutely last things we do.
         addBelief(newBelief)
+
+    }
+
+
+
+
+    /**
+     * Returns whether a belief is contradictory to the knowledge base. Not necessary for the assignment afaik
+     */
+    public fun checkIfBeliefContradicts(beliefToCheck: Belief): Boolean{
+        for (belief in beliefs) {
+            if (contradicts(belief, beliefToCheck)) return true
+        }
+        return false
     }
 }
 
