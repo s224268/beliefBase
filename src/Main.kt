@@ -1,6 +1,9 @@
+import CNF_Converter.*
 import java.sql.DriverManager.println
 
 fun main() {
-    CNF_Conversion()
-    println("Hello World!")
+    //val cnfList: List<CNF> = toClass(stringTo("IFF('c','d')"))
+    println("\n HEy")
+    //println(cnfList.toString())
+
 }
