@@ -89,7 +89,7 @@ private fun selectBeliefToRemove(contradictingBeliefs: Set<Belief>): Belief{
     return beliefsToNumbers.minBy{ it.value }.key //Lowest val
 }
 
-class Belief(originalExpression: String) {
+public class Belief(originalExpression: String) {
     val CNFString = originalExpression
     var CNF: CNF = CNF(originalExpression)
 
@@ -128,11 +128,20 @@ class BeliefBase {
         return TODO()
     }
 
+    fun printBeliefs(){
+        println("Current base beliefs are:")
+        for (belief in beliefs){
+            println(belief.CNFString)
+        }
+        println("Entailments of these are:")
+        println("TODO") //TODO: Fix this
+    }
+
     private fun addBelief(beliefToAdd: Belief) {
         beliefToAdd.addedNumber = numberOfBeliefs
         numberOfBeliefs++
         beliefs.add(beliefToAdd)
-        redoEntailments()
+        //redoEntailments()
     }
 
     private fun clearAllEntailments(){
@@ -170,20 +179,12 @@ class BeliefBase {
     private fun giveBelief(newBelief: Belief) {
         do {
             val contradictingBeliefs = mutableSetOf<Belief>()
-            //TODO: THIS IS WRONG
-            /*
-            for (belief in beliefs) {
-                if (contradicts(belief, newBelief)) {
-                    contradictingBeliefs.add(belief)
-                }
+
+            if (DPLL_satisfiable(newBelief)){
+                println("Here?")
             }
 
-             */
-            //An issue exists
-            val beliefToRemove = selectBeliefToRemove(contradictingBeliefs)
-            //Shouldn't ever be an issue, but a lil error checking never hurts
-            if (!beliefs.remove(beliefToRemove)) {throw Exception("Tried to remove belief that wasn't in belief base")}
-        } while (contradictingBeliefs.size!=0)
+        } while (false)
         //The absolutely last things we do.
         addBelief(newBelief)
 
@@ -205,7 +206,7 @@ class BeliefBase {
 
      */
 
-    private fun DPLL_satisfiable(): Boolean{
+    private fun DPLL_satisfiable(newBelief: Belief): Boolean{
         val clauses: MutableSet<Disjunction> = mutableSetOf<Disjunction>()
         val literals: MutableSet<Literal> = mutableSetOf<Literal>()
         val model: MutableMap<String, Boolean?> = mutableMapOf()
@@ -213,6 +214,7 @@ class BeliefBase {
         for (belief in beliefs){
             clauses.addAll(belief.CNF.disjunctions)
         }
+        clauses.addAll(newBelief.CNF.disjunctions)
 
         for(belief in beliefs){
             for (disjunc in belief.CNF.disjunctions){
@@ -221,6 +223,7 @@ class BeliefBase {
                 }
             }
         }
+        for (newBe)
         return DPLL(clauses, literals, model)!!
     }
 
@@ -280,65 +283,44 @@ class BeliefBase {
             return DPLL(clauses, symbols, model)
         }
 
+        /*  Iterates over the clauses. If a clause contains exactly one undecided literal
+            and all other literals are false (as by the model),
+            then it should set that literal to true in the model
+            and remove it from the symbols set.*/
         var secondP: Literal? = null
-        //P, value = FINDUNITCLAUSE(clauses, model)
-        for(clause in clauses) {
-            var assignedSymbolCount = 0
-            for(literal in clause.variables){
-                if(symbols.contains(literal)) {
-                    if(model[literal.varName] != null) {
-                        assignedSymbolCount++
-                    } else {
-                        secondP = literal
-                    }
+        for (clause in clauses) {
+            var undecidedCount: Int = 0
+            var allLiteralsFalse = true
+            for (variable in clause.variables) {
+                val status: Boolean? = model[variable.varName]
+                if (status == null) {
+                    undecidedCount += 1
+                    secondP = variable
                 }
-                if(assignedSymbolCount == clause.variables.size-1) {
-                    if (secondP != null) { //If P != null return DPLL(clauses, symbols - P, model where P = value)
-                        model[secondP.varName] = !secondP.isNot
-                        symbols.remove(secondP)
-                    }
+                else if (status == true) {
+                    allLiteralsFalse = false
+                    break
                 }
             }
+            if (undecidedCount == 1 && allLiteralsFalse) {
+                if (secondP != null) {
+                    model[secondP.varName] = true
+                }
+                symbols.remove(secondP)
+            }
         }
+
 
         //P = FIRST(Symbols) [pick any?]
         //Rest = REST(symbols)
         val thirdP = symbols.first()
         symbols.remove(thirdP)
+        val map1 = model.toMutableMap()
+        val map2 = model.toMutableMap()
+        map1.set(thirdP.varName, false)
+        map2.set(thirdP.varName, true)
 
         //return DPLL(clauses, rest, model U p=true) OR DPLL(clauses, rest, model U P=false)
-        return DPLL(clauses, symbols, model.set(thirdP, true)) || DPLL(clauses, symbols, model.set(thirdP, false))
+        return DPLL(clauses, symbols, map1) || DPLL(clauses, symbols, map2)
     }
 }
-
-
-/*
-DPLL
-    Select first literal in set
-    set literal to false
-    Loop start
-    evaluate clauses that include the literal
-    if a clause has only 2 literals and 1 is false, set the other one to true
-    if a clause can't be true then return false
-    loop ends
-
-*/
-
-
-/*
-function DPLL(Φ)
-    // unit propagation:
-    while there is a unit clause {l} in Φ do
-        Φ ← unit-propagate(l, Φ);
-    // pure literal elimination:
-    while there is a literal l that occurs pure in Φ do
-        Φ ← pure-literal-assign(l, Φ);
-    // stopping conditions:
-    if Φ is empty then
-        return true;
-    if Φ contains an empty clause then
-        return false;
-    // DPLL procedure:
-    l ← choose-literal(Φ);
-    return DPLL(Φ ∧ {l}) or DPLL(Φ ∧ {¬l});
- */
