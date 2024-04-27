@@ -1,21 +1,71 @@
-import CNF_Converter.stringTo
-import CNF_Converter.toClass
+private class Disjunction(val disjunctionString: String){
+    val variables: MutableList<Literal> = mutableListOf()
+    init{
+        for (literalString in disjunctionString.split('∨')){
+            variables.add(Literal(literalString))
+        }
+    }
+    fun evaluate(map: Map<String, Boolean?>): Boolean?{
+        for (variable in variables){
+            if (variable.evaluate(map)){
+                return true
+            }
+        }
+        return false
+    }
+}
 
 /**
- * This one needs to call the Java code
+ * This is a conjunction
  */
-private fun toCNF(expression: String): String{
-    //TODO: Call external library. Supposedly hard, so dont bother doing it yourself
-    val cnfList: List<CNF> = toClass(stringTo(expression))
-    return cnfList[0].convert().simplify().toString()
+private class CNF(val CNFString: String) {
+    val disjunctions: MutableList<Disjunction> = mutableListOf()
+    init{
+        try{
+            val stringList = CNFString.split('∧')
+            for(disjunctionString in stringList){
+                disjunctions.add(Disjunction(disjunctionString))
+            }
+        } catch (e: KotlinNullPointerException){
+            println("Invalid input")
+        }
+    }
+
+
+    fun evaluate(map: Map<String, Boolean?>): Boolean? {
+        for (disjunction in disjunctions){
+            val result = disjunction.evaluate(map)
+            if (result == null) return null
+            if (!disjunction.evaluate(map)!!){
+                return false
+            }
+        }
+        return true
+    }
 }
-/**
- * Checks whether two beliefs contradict eachother
- */
-private fun contradicts(belief1: Belief, belief2: Belief): Boolean{
-    //https://sat.inesc-id.pt/~ines/cp07.pdf This for some advanced shit.
-    // Maybe we should just iterate over every combination first
-    return TODO()
+
+private class Literal(val literalString: String){
+    var varName: String = ""
+    var isNot: Boolean = false
+
+    init{
+        if(literalString.contains('¬')){
+            isNot = true
+        }
+        val regex = "[a-zA-Z]+".toRegex()
+        varName = regex.find(literalString,0)!!.value
+
+    }
+
+    fun evaluate(map: Map<String, Boolean?>): Boolean?{
+        if (map[varName] == null){
+            return null
+        }
+        if (isNot){
+            return !map[varName]!!
+        }
+        return map[varName]!!
+    }
 }
 
 /**
@@ -40,8 +90,8 @@ private fun selectBeliefToRemove(contradictingBeliefs: Set<Belief>): Belief{
 }
 
 class Belief(originalExpression: String) {
-    val CNF: String = toCNF(originalExpression)
-    val originalExpression: String = originalExpression
+    val CNFString = originalExpression
+    var CNF: CNF = CNF(originalExpression)
 
     //addedNumber Is used to order the beliefs. Maybe we should just use a sorted list instead.
     //This is mainly for if we just remove the oldest belief first, which is dubious, but at the same time
@@ -68,6 +118,15 @@ class BeliefBase {
     //There is no reason to ever remove a belief unless we find its direct contradiction, since redundant information
     //may be un-redundated when presented with new info
     private val beliefs: MutableSet<Belief> = mutableSetOf() //Only holds base beliefs. None of these have parents
+
+    /**
+     * Checks whether two beliefs contradict eachother
+     */
+    private fun contradicts(belief1: Belief): Boolean{
+        //https://sat.inesc-id.pt/~ines/cp07.pdf This for some advanced shit.
+        // Maybe we should just iterate over every combination first
+        return TODO()
+    }
 
     private fun addBelief(beliefToAdd: Belief) {
         beliefToAdd.addedNumber = numberOfBeliefs
@@ -97,20 +156,29 @@ class BeliefBase {
     }
 
     private fun determineEntailments(){
+
+
         TODO() //This is where all the actual hard code goes
     }
 
     /**
      * The "main" method for adding a belief
      */
-    public fun giveBelief(newBelief: Belief) {
+    public fun giveBeliefString(newBeliefString: String){
+        giveBelief(Belief(newBeliefString))
+    }
+    private fun giveBelief(newBelief: Belief) {
         do {
             val contradictingBeliefs = mutableSetOf<Belief>()
+            //TODO: THIS IS WRONG
+            /*
             for (belief in beliefs) {
                 if (contradicts(belief, newBelief)) {
                     contradictingBeliefs.add(belief)
                 }
             }
+
+             */
             //An issue exists
             val beliefToRemove = selectBeliefToRemove(contradictingBeliefs)
             //Shouldn't ever be an issue, but a lil error checking never hurts
@@ -127,6 +195,7 @@ class BeliefBase {
     /**
      * Returns whether a belief is contradictory to the knowledge base. Not necessary for the assignment afaik
      */
+    /*
     public fun checkIfBeliefContradicts(beliefToCheck: Belief): Boolean{
         for (belief in beliefs) {
             if (contradicts(belief, beliefToCheck)) return true
@@ -135,3 +204,20 @@ class BeliefBase {
     }
 }
 
+/*
+function DPLL(Φ)
+    // unit propagation:
+    while there is a unit clause {l} in Φ do
+        Φ ← unit-propagate(l, Φ);
+    // pure literal elimination:
+    while there is a literal l that occurs pure in Φ do
+        Φ ← pure-literal-assign(l, Φ);
+    // stopping conditions:
+    if Φ is empty then
+        return true;
+    if Φ contains an empty clause then
+        return false;
+    // DPLL procedure:
+    l ← choose-literal(Φ);
+    return DPLL(Φ ∧ {l}) or DPLL(Φ ∧ {¬l});
+ */

@@ -57,7 +57,7 @@ public class CNF_Converter {
         return noDupes.stream().sorted((s1, s2) -> s2.length() - s1.length()).collect(Collectors.toList());
     }
 
-    static <E>BiFunction<CNF, CNF, CNF> arrows (String choice) {
+    static <E>BiFunction<CNFimported, CNFimported, CNFimported> arrows (String choice) {
         try {
             if (choice.equals("IFF")) {
                 return Iff::new;
@@ -73,7 +73,7 @@ public class CNF_Converter {
         }
     }
 
-    static <E>Function<ArrayList<CNF>, CNF> andor (String choice) {
+    static <E>Function<ArrayList<CNFimported>, CNFimported> andor (String choice) {
         try {
             if (choice.equals("AND")) {
                 return And::new;
@@ -89,30 +89,30 @@ public class CNF_Converter {
         }
     }
 
-    static Map<String, CNF> hash (List<CNF> terms) {
-        Map<String, CNF> map = new HashMap<>();
-        for (CNF t : terms) {
+    static Map<String, CNFimported> hash (List<CNFimported> terms) {
+        Map<String, CNFimported> map = new HashMap<>();
+        for (CNFimported t : terms) {
             map.put(t.toString(), t);
         }
-        map.put("TRUE", new Atomic(true, ""));
-        map.put("FALSE", new Atomic(false, ""));
+        map.put("TRUE", new Atomicimported(true, ""));
+        map.put("FALSE", new Atomicimported(false, ""));
         return map;
     }
 
     //this is where the actual conversion happens
-    static List<CNF> toClass (List<String> terms) {
+    static List<CNFimported> toClass (List<String> terms) {
         List<String> possible = Arrays.asList("IFF", "OR", "NOT", "IMP", "AND");
         if (terms.size() > 0) {
             String goal = terms.remove(0);
-            List<CNF> converted = toClass(terms);
+            List<CNFimported> converted = toClass(terms);
             var map = hash(converted);
             if (goal.length() == 3) {
-                converted.add(0, new Atomic(goal.charAt(1)));
+                converted.add(0, new Atomicimported(goal.charAt(1)));
             } else {
                 if (goal.equals("TRUE")) {
-                    converted.add(0, new Atomic(true, ""));
+                    converted.add(0, new Atomicimported(true, ""));
                 } else if (goal.equals("FALSE")) {
-                    converted.add(0, new Atomic(false, ""));
+                    converted.add(0, new Atomicimported(false, ""));
                 } else {
                     String outer = goal.substring(0, 3);
                     String inner = noParen(goal);
@@ -127,7 +127,7 @@ public class CNF_Converter {
                     } else if (outer.contains(possible.get(1)) || outer.equals(possible.get(4))) {
                         var constructor = andor(outer);
                         List<String> matchon = splitAt(inner);
-                        ArrayList<CNF> cnfed = new ArrayList<>();
+                        ArrayList<CNFimported> cnfed = new ArrayList<>();
                         for (String s : matchon) {
                             if (!s.equals("")) {
                                 cnfed.add(map.get(s));

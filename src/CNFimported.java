@@ -4,22 +4,22 @@ import java.util.stream.Collectors;
 
 class NoneTypeE extends Exception {}
 
-abstract class CNF {
+abstract class CNFimported {
     // methods here later
-    abstract CNF convert ();
+    abstract CNFimported convert ();
     abstract String toSAT ();
-    abstract CNF simplify ();
+    abstract CNFimported simplify ();
 }
 
-class Atomic extends CNF {
+class Atomicimported extends CNFimported {
     private char val = ' ';
     private boolean isTrue;
 
-    Atomic (boolean b, String flag) {
+    Atomicimported(boolean b, String flag) {
         this.isTrue = b;
     }
 
-    Atomic (char val) {
+    Atomicimported(char val) {
         this.val = val;
     }
 
@@ -33,7 +33,7 @@ class Atomic extends CNF {
     }
 
     @Override
-    CNF convert () {
+    CNFimported convert () {
         return this;
     }
 
@@ -47,7 +47,7 @@ class Atomic extends CNF {
     }
 
     @Override
-    CNF simplify() {
+    CNFimported simplify() {
         // cannot simplify atomic
         return this;
     }
@@ -69,10 +69,10 @@ class Atomic extends CNF {
     }
 }
 
-class Not extends CNF {
-    private CNF value;
+class Not extends CNFimported {
+    private CNFimported value;
 
-    Not (CNF value) {
+    Not (CNFimported value) {
         this.value = value;
     }
 
@@ -82,7 +82,7 @@ class Not extends CNF {
     }
 
     @Override
-    CNF convert() {
+    CNFimported convert() {
         return new Not(value.convert());
     }
 
@@ -92,30 +92,30 @@ class Not extends CNF {
     }
 
     @Override
-    CNF simplify() {
-        CNF nval;
+    CNFimported simplify() {
+        CNFimported nval;
         if (value instanceof Not) {
             nval = ((Not) value).getValue().simplify();
         } else if (value instanceof And) {
-            ArrayList<CNF> ors = new ArrayList<>();
-            for (CNF o : ((And) value).getPhis()) {
-                CNF negapp = new Not(o).simplify();
+            ArrayList<CNFimported> ors = new ArrayList<>();
+            for (CNFimported o : ((And) value).getPhis()) {
+                CNFimported negapp = new Not(o).simplify();
                 ors.add(negapp);
             }
             nval = new Or(ors);
         } else if (value instanceof Or) {
-            ArrayList<CNF> and = new ArrayList<>();
-            for (CNF o : ((Or) value).getPhis()) {
-                CNF negapp = new Not(o).simplify();
+            ArrayList<CNFimported> and = new ArrayList<>();
+            for (CNFimported o : ((Or) value).getPhis()) {
+                CNFimported negapp = new Not(o).simplify();
                 and.add(negapp);
             }
             nval = new And(and);
-        } else if (value instanceof Atomic) {
-            if (((Atomic) value).getVal() == ' ') {
-                if (((Atomic) value).isTrue()) {
-                    nval = new Atomic(false, "");
+        } else if (value instanceof Atomicimported) {
+            if (((Atomicimported) value).getVal() == ' ') {
+                if (((Atomicimported) value).isTrue()) {
+                    nval = new Atomicimported(false, "");
                 } else {
-                    nval = new Atomic(true, "");
+                    nval = new Atomicimported(true, "");
                 }
             } else {
                 nval = this;
@@ -126,21 +126,21 @@ class Not extends CNF {
         return nval;
     }
 
-    public CNF getValue() {
+    public CNFimported getValue() {
         return value;
     }
 
-    public void setValue(CNF value) {
+    public void setValue(CNFimported value) {
         this.value = value;
     }
 }
 
 
-class Imp extends CNF {
-    private CNF left;
-    private CNF right;
+class Imp extends CNFimported {
+    private CNFimported left;
+    private CNFimported right;
 
-    Imp (CNF left, CNF right) {
+    Imp (CNFimported left, CNFimported right) {
         this.left = left;
         this.right = right;
     }
@@ -151,8 +151,8 @@ class Imp extends CNF {
     }
 
     @Override
-    CNF convert() {
-        ArrayList<CNF> ors = new ArrayList<>(Arrays.asList(new Not(left.convert()), right.convert()));
+    CNFimported convert() {
+        ArrayList<CNFimported> ors = new ArrayList<>(Arrays.asList(new Not(left.convert()), right.convert()));
         return new Or(ors);
     }
 
@@ -162,35 +162,35 @@ class Imp extends CNF {
     }
 
     @Override
-    CNF simplify() {
+    CNFimported simplify() {
         // cannot simply if
         return this;
     }
 
-    public CNF getLeft() {
+    public CNFimported getLeft() {
         return left;
     }
 
-    public void setLeft(CNF left) {
+    public void setLeft(CNFimported left) {
         this.left = left;
     }
 
-    public CNF getRight() {
+    public CNFimported getRight() {
         return right;
     }
 
-    public void setRight(CNF right) {
+    public void setRight(CNFimported right) {
         this.right = right;
     }
 }
 
 
-class Iff extends CNF {
-    private CNF left;
-    private CNF right;
+class Iff extends CNFimported {
+    private CNFimported left;
+    private CNFimported right;
     // same as its recent parent
 
-    Iff (CNF left, CNF right) {
+    Iff (CNFimported left, CNFimported right) {
         this.left = left;
         this.right = right;
     }
@@ -201,10 +201,10 @@ class Iff extends CNF {
     }
 
     @Override
-    CNF convert() {
+    CNFimported convert() {
         Imp nleft = new Imp(left, right);
         Imp nright = new Imp(right, left);
-        ArrayList<CNF> ands = new ArrayList<>(Arrays.asList(nleft.convert(), nright.convert()));
+        ArrayList<CNFimported> ands = new ArrayList<>(Arrays.asList(nleft.convert(), nright.convert()));
         return new And(ands);
     }
 
@@ -214,32 +214,32 @@ class Iff extends CNF {
     }
 
     @Override
-    CNF simplify() {
+    CNFimported simplify() {
         // cannot simply if
         return null;
     }
 
-    public CNF getLeft() {
+    public CNFimported getLeft() {
         return left;
     }
 
-    public void setLeft(CNF left) {
+    public void setLeft(CNFimported left) {
         this.left = left;
     }
 
-    public CNF getRight() {
+    public CNFimported getRight() {
         return right;
     }
 
-    public void setRight(CNF right) {
+    public void setRight(CNFimported right) {
         this.right = right;
     }
 }
 
-class Or extends CNF {
-    private ArrayList<CNF> phis;
+class Or extends CNFimported {
+    private ArrayList<CNFimported> phis;
 
-    Or (ArrayList<CNF> phis) {
+    Or (ArrayList<CNFimported> phis) {
         this.phis = phis;
     }
 
@@ -254,12 +254,12 @@ class Or extends CNF {
     }
 
     @Override
-    CNF convert() {
-        ArrayList<CNF> converted = new ArrayList<>();
-        for (CNF phi : phis) {
+    CNFimported convert() {
+        ArrayList<CNFimported> converted = new ArrayList<>();
+        for (CNFimported phi : phis) {
             converted.add(phi.convert());
         }
-        return phis.size() == 0 ? new Atomic(false, "") : new Or(converted);
+        return phis.size() == 0 ? new Atomicimported(false, "") : new Or(converted);
     }
 
     @Override
@@ -268,38 +268,38 @@ class Or extends CNF {
     }
 
     @Override
-    CNF simplify() {
-        ArrayList<CNF> simps = new ArrayList<>();
-        for (CNF phi : phis) {
-            CNF simp = phi.simplify();
-            if (simp instanceof Atomic) {
-                if (((Atomic) simp).getVal() == ' ') {
-                    if (((Atomic) simp).isTrue()) {
-                        return new Atomic(true, "");
-                    } else if (!((Atomic) simp).isTrue()) {
+    CNFimported simplify() {
+        ArrayList<CNFimported> simps = new ArrayList<>();
+        for (CNFimported phi : phis) {
+            CNFimported simp = phi.simplify();
+            if (simp instanceof Atomicimported) {
+                if (((Atomicimported) simp).getVal() == ' ') {
+                    if (((Atomicimported) simp).isTrue()) {
+                        return new Atomicimported(true, "");
+                    } else if (!((Atomicimported) simp).isTrue()) {
                         continue;
                     }
                 }
             }
             simps.add(simp);
         }
-        return simps.size() == 0 ? new Atomic(false, "") : new Or(simps);
+        return simps.size() == 0 ? new Atomicimported(false, "") : new Or(simps);
     }
 
-    public ArrayList<CNF> getPhis() {
+    public ArrayList<CNFimported> getPhis() {
         return phis;
     }
 
-    public void setPhis(ArrayList<CNF> phis) {
+    public void setPhis(ArrayList<CNFimported> phis) {
         this.phis = phis;
     }
 }
 
 
-class And extends CNF {
-    private ArrayList<CNF> phis;
+class And extends CNFimported {
+    private ArrayList<CNFimported> phis;
 
-    And (ArrayList<CNF> phis) {
+    And (ArrayList<CNFimported> phis) {
         this.phis = phis;
     }
 
@@ -314,12 +314,12 @@ class And extends CNF {
     }
 
     @Override
-    CNF convert() {
-        ArrayList<CNF> converted = new ArrayList<>();
-        for (CNF phi : phis) {
+    CNFimported convert() {
+        ArrayList<CNFimported> converted = new ArrayList<>();
+        for (CNFimported phi : phis) {
             converted.add(phi.convert());
         }
-        return phis.size() == 0 ? new Atomic(true, "") : new And(converted);
+        return phis.size() == 0 ? new Atomicimported(true, "") : new And(converted);
     }
 
     @Override
@@ -328,29 +328,29 @@ class And extends CNF {
     }
 
     @Override
-    CNF simplify() {
-        ArrayList<CNF> simps = new ArrayList<>();
-        for (CNF phi : phis) {
-            CNF simp = phi.simplify();
-            if (simp instanceof Atomic) {
-                if (((Atomic) simp).getVal() == ' ') {
-                    if (((Atomic) simp).isTrue()) {
+    CNFimported simplify() {
+        ArrayList<CNFimported> simps = new ArrayList<>();
+        for (CNFimported phi : phis) {
+            CNFimported simp = phi.simplify();
+            if (simp instanceof Atomicimported) {
+                if (((Atomicimported) simp).getVal() == ' ') {
+                    if (((Atomicimported) simp).isTrue()) {
                         continue;
-                    } else if (!((Atomic) simp).isTrue()) {
-                        return new Atomic(false, "");
+                    } else if (!((Atomicimported) simp).isTrue()) {
+                        return new Atomicimported(false, "");
                     }
                 }
             }
             simps.add(simp);
         }
-        return simps.size() == 0 ? new Atomic(true, "") : new And(simps);
+        return simps.size() == 0 ? new Atomicimported(true, "") : new And(simps);
     }
 
-    public ArrayList<CNF> getPhis() {
+    public ArrayList<CNFimported> getPhis() {
         return phis;
     }
 
-    public void setPhis(ArrayList<CNF> phis) {
+    public void setPhis(ArrayList<CNFimported> phis) {
         this.phis = phis;
     }
 }
