@@ -7,7 +7,7 @@ import CNF_Converter.toClass
 private fun toCNF(expression: String): String{
     //TODO: Call external library. Supposedly hard, so dont bother doing it yourself
     val cnfList: List<CNF> = toClass(stringTo(expression))
-    return cnfList.toString()
+    return cnfList[0].convert().simplify().toString()
 }
 /**
  * Checks whether two beliefs contradict eachother

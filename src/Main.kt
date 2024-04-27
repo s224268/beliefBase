@@ -1,9 +1,7 @@
-import CNF_Converter.*
-import java.sql.DriverManager.println
-
+import CNF_Converter.stringTo
+import CNF_Converter.toClass
+import kotlin.io.*
 fun main() {
-    //val cnfList: List<CNF> = toClass(stringTo("IFF('c','d')"))
-    println("\n HEy")
-    //println(cnfList.toString())
-
+    val cnfList: List<CNF> = toClass(stringTo("IMP('c','d')"))
+    System.out.println(cnfList[0].convert().simplify().toSAT())
 }
