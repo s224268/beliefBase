@@ -221,7 +221,7 @@ class BeliefBase {
                 }
             }
         }
-        /*return DPLL(clauses, literals, model)!!
+        return DPLL(clauses, literals, model)!!
     }
 
     private fun allClausesTrue(clauses: Set<Disjunction>, model: Map<String, Boolean?>): Boolean {
