@@ -202,7 +202,128 @@ class BeliefBase {
         }
         return false
     }
+
+     */
+
+    private fun DPLL_satisfiable(): Boolean{
+        val clauses: MutableSet<Disjunction> = mutableSetOf<Disjunction>()
+        val literals: MutableSet<Literal> = mutableSetOf<Literal>()
+        val model: MutableMap<String, Boolean?> = mutableMapOf()
+
+        for (belief in beliefs){
+            clauses.addAll(belief.CNF.disjunctions)
+        }
+
+        for(belief in beliefs){
+            for (disjunc in belief.CNF.disjunctions){
+                for(literal in disjunc.variables){
+                    literals.add(literal)
+                }
+            }
+        }
+        /*return DPLL(clauses, literals, model)!!
+    }
+
+    private fun allClausesTrue(clauses: Set<Disjunction>, model: Map<String, Boolean?>): Boolean {
+        var truthCounter = 0
+        for (clause in clauses) {
+            if (clause.evaluate(model) == true) {
+                truthCounter++
+            }
+        }
+        return truthCounter == clauses.size
+    }
+
+    private fun someClauseFalse(clauses: Set<Disjunction>, model: Map<String, Boolean?>): Boolean {
+        for (clause in clauses) {
+            if (clause.evaluate(model) == false) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun DPLL(clauses: Set<Disjunction>, symbols: MutableSet<Literal>, model: MutableMap<String, Boolean?>): Boolean { //TODO: Remove kotlin.any
+        //If every clause in clauses is true in model then return true
+
+        if(allClausesTrue(clauses, model)){
+            return true
+        }
+
+        //If some clause in clauses is false in model then return false
+        if (someClauseFalse(clauses, model)){
+            return false
+        }
+
+        // iterate over strings in model. If any string is only presented one time, safely set it to true and check the model
+        //P, value = FINDPURESYMBOL(symbol, clauses, model)
+        var P: Literal? = null
+
+        for(literal in symbols) {
+            var pure: Boolean = true
+            var symbolsOfLiteral: List<Literal> =
+                symbols.filter { sym -> sym.varName == literal.varName}
+            for (innerLiteral in symbolsOfLiteral) {
+                if (innerLiteral.isNot != literal.isNot) {
+                    pure = false
+                    break
+                }
+            }
+            if(pure) {
+                P = literal
+            }
+        }
+
+        if (P != null){ //If P != null return DPLL(clauses, symbols - P, model where P = value)
+            model[P.varName] = !P.isNot
+            symbols.remove(P)
+            return DPLL(clauses, symbols, model)
+        }
+
+        var secondP: Literal? = null
+        //P, value = FINDUNITCLAUSE(clauses, model)
+        for(clause in clauses) {
+            var assignedSymbolCount = 0
+            for(literal in clause.variables){
+                if(symbols.contains(literal)) {
+                    if(model[literal.varName] != null) {
+                        assignedSymbolCount++
+                    } else {
+                        secondP = literal
+                    }
+                }
+                if(assignedSymbolCount == clause.variables.size-1) {
+                    if (secondP != null) { //If P != null return DPLL(clauses, symbols - P, model where P = value)
+                        model[secondP.varName] = !secondP.isNot
+                        symbols.remove(secondP)
+                    }
+                }
+            }
+        }
+
+        //P = FIRST(Symbols) [pick any?]
+        //Rest = REST(symbols)
+        val thirdP = symbols.first()
+        symbols.remove(thirdP)
+
+        //return DPLL(clauses, rest, model U p=true) OR DPLL(clauses, rest, model U P=false)
+        return DPLL(clauses, symbols, model.set(thirdP, true)) || DPLL(clauses, symbols, model.set(thirdP, false))
+    }
 }
+
+
+/*
+DPLL
+    Select first literal in set
+    set literal to false
+    Loop start
+    evaluate clauses that include the literal
+    if a clause has only 2 literals and 1 is false, set the other one to true
+    if a clause can't be true then return false
+    loop ends
+
+*/
+
 
 /*
 function DPLL(Φ)
