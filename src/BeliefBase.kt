@@ -1,10 +1,13 @@
+import CNF_Converter.stringTo
+import CNF_Converter.toClass
 
 /**
  * This one needs to call the Java code
  */
 private fun toCNF(expression: String): String{
     //TODO: Call external library. Supposedly hard, so dont bother doing it yourself
-    return TODO()
+    val cnfList: List<CNF> = toClass(stringTo(expression))
+    return cnfList[0].convert().simplify().toString()
 }
 /**
  * Checks whether two beliefs contradict eachother

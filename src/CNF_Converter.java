@@ -1,12 +1,9 @@
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public class CNF_Conversion {
+public class CNF_Converter {
     static String noParen (String input) {
         int begin = input.indexOf("(");
         return input.substring(begin+1, input.length()-1);
@@ -60,7 +57,6 @@ public class CNF_Conversion {
         return noDupes.stream().sorted((s1, s2) -> s2.length() - s1.length()).collect(Collectors.toList());
     }
 
-    // i am an idiot
     static <E>BiFunction<CNF, CNF, CNF> arrows (String choice) {
         try {
             if (choice.equals("IFF")) {
