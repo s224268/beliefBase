@@ -89,17 +89,7 @@ public fun getWorth(belief:Belief): Int{
 /**
  * Decides on which belief to remove.
  */
-public fun selectBeliefToRemove(contradictingBeliefs: Set<Belief>, holyBelief: Belief): Belief{
 
-    //TODO The following is based on number of entailments/children.
-    // We could, alternatively, just order them based on addedNumber if this is impractical
-    val beliefsToNumbers: MutableMap<Belief, Int> = mutableMapOf() //Rename this?
-    for (belief in contradictingBeliefs) {
-        beliefsToNumbers.put(key = belief, value = getWorth(belief))
-    }
-    beliefsToNumbers.remove(holyBelief) //We remove the holy belief, because we dont want it removed from the set of all beliefs
-    return beliefsToNumbers.minBy{ it.value }.key //Lowest val
-}
 
 public class Belief(originalExpression: String) {
     val CNFString = originalExpression
@@ -138,6 +128,25 @@ class BeliefBase {
         //https://sat.inesc-id.pt/~ines/cp07.pdf This for some advanced shit.
         // Maybe we should just iterate over every combination first
         return TODO()
+    }
+
+    private fun selectAndRemoveBelief(contradictingBeliefs: Set<Belief>, holyBelief: Belief){
+
+        //TODO The following is based on number of entailments/children.
+        // We could, alternatively, just order them based on addedNumber if this is impractical
+
+        if(contradictingBeliefs.size==1 && contradictingBeliefs.first() == holyBelief){
+            println("Your belief is an oxymoron (Contradiction). It will not be added to the belief base")
+            beliefs.remove(holyBelief)
+            return
+        }
+
+        val beliefsToNumbers: MutableMap<Belief, Int> = mutableMapOf() //Rename this?
+        for (belief in contradictingBeliefs) {
+            beliefsToNumbers.put(key = belief, value = getWorth(belief))
+        }
+        beliefsToNumbers.remove(holyBelief) //We remove the holy belief, because we don't want it removed from the set of all beliefs
+        beliefs.remove(beliefsToNumbers.minBy{ it.value }.key) //Lowest val
     }
 
     fun printBeliefs(){
@@ -200,7 +209,7 @@ class BeliefBase {
                 for(belief in inconsistentBeliefs){
                     println(belief.CNFString)
                 }
-                beliefs.remove(selectBeliefToRemove(inconsistentBeliefs, newBelief))
+                selectAndRemoveBelief(inconsistentBeliefs, newBelief)
                 printBeliefs()
             } else inconsistent = false
 
@@ -248,7 +257,8 @@ class BeliefBase {
         return DPLL(clauses, literals, model)
     }
 
-    private fun DPLL(clauses: Set<Disjunction>, symbols: MutableSet<Literal>, model: MutableMap<String, Boolean?>): Boolean { //TODO: Remove kotlin.any
+    private fun DPLL(clauses: Set<Disjunction>, symbols: MutableSet<Literal>, model: MutableMap<String, Boolean?>): Boolean {
+        println("Testing with model " + model)
         //If every clause in clauses is true in model then return true
 
         if(allClausesTrue(clauses, model)){
@@ -279,7 +289,9 @@ class BeliefBase {
             }
         }
 
-        if (P != null){ //If P != null return DPLL(clauses, symbols - P, model where P = value)
+        if (P != null && model[P.varName] == null){ //If P != null return DPLL(clauses, symbols - P, model where P = value)
+
+            //I think there is an issue here where k is set to false and then true for AND(IFF('k','b'),NOT('k'))
             model[P.varName] = !P.isNot
             symbols.remove(P)
             return DPLL(clauses, symbols, model)
@@ -313,11 +325,9 @@ class BeliefBase {
         }
 
 
-        //Exact problem here is that
         //P = FIRST(Symbols) [pick any?]
         //Rest = REST(symbols)
 
-        //ANTON MODIFIED THIS
         val thirdP = symbols.first()
         symbols.remove(thirdP)
         val modelWherePTrue = model.toMutableMap()

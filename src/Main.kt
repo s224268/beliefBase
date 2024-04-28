@@ -29,10 +29,13 @@ fun takeInput(){
 
 fun testMain(){
     val beliefBase: BeliefBase = BeliefBase()
-    giveBelief("NOT('b')", beliefBase)
+    giveBelief("AND(IFF('k','b'),NOT('k'))", beliefBase)
+    /*
     giveBelief("NOT('c')", beliefBase)
     giveBelief("OR('a','b','c')", beliefBase)
     giveBelief("NOT('a')", beliefBase)
+
+     */
 }
 
 fun giveBelief(input: String, beliefBase: BeliefBase){
