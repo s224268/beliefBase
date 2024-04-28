@@ -89,7 +89,7 @@ public fun getWorth(belief:Belief): Int{
 /**
  * Decides on which belief to remove.
  */
-public fun selectBeliefToRemove(contradictingBeliefs: Set<Belief>): Belief{
+public fun selectBeliefToRemove(contradictingBeliefs: Set<Belief>, holyBelief: Belief): Belief{
 
     //TODO The following is based on number of entailments/children.
     // We could, alternatively, just order them based on addedNumber if this is impractical
@@ -97,6 +97,7 @@ public fun selectBeliefToRemove(contradictingBeliefs: Set<Belief>): Belief{
     for (belief in contradictingBeliefs) {
         beliefsToNumbers.put(key = belief, value = getWorth(belief))
     }
+    beliefsToNumbers.remove(holyBelief) //We remove the holy belief, because we dont want it removed from the set of all beliefs
     return beliefsToNumbers.minBy{ it.value }.key //Lowest val
 }
 
@@ -185,6 +186,7 @@ class BeliefBase {
      * The "main" method for adding a belief
      */
     public fun giveBeliefString(newBeliefString: String){
+        println("New belief is: " + newBeliefString)
         giveBelief(Belief(newBeliefString))
     }
     private fun giveBelief(newBelief: Belief) {
@@ -194,11 +196,11 @@ class BeliefBase {
         do {
             if (!DPLL_satisfiable(newBelief)){
                 inconsistent = true
-                println("Model is not satisfiable. Following beliefs are inconsistent, and will be removed:")
+                println("Model is not satisfiable. Following beliefs are causing inconsistency, and one will be removed:")
                 for(belief in inconsistentBeliefs){
                     println(belief.CNFString)
                 }
-                beliefs.removeAll(inconsistentBeliefs)
+                beliefs.remove(selectBeliefToRemove(inconsistentBeliefs, newBelief))
                 printBeliefs()
             } else inconsistent = false
 
@@ -215,7 +217,7 @@ class BeliefBase {
     }
 
     private fun someClauseFalse(clauses: Set<Disjunction>, model: Map<String, Boolean?>): Boolean {
-        inconsistentBeliefs.clear()
+
         for (clause in clauses) {
             if (clause.evaluate(model) == false) {
                 inconsistentBeliefs.add(clause.parent.parent)
@@ -242,7 +244,8 @@ class BeliefBase {
             }
         }
 
-        return DPLL(clauses, literals, model)!!
+        inconsistentBeliefs.clear()
+        return DPLL(clauses, literals, model)
     }
 
     private fun DPLL(clauses: Set<Disjunction>, symbols: MutableSet<Literal>, model: MutableMap<String, Boolean?>): Boolean { //TODO: Remove kotlin.any
@@ -303,7 +306,7 @@ class BeliefBase {
             }
             if (undecidedCount == 1 && allLiteralsFalse) {
                 if (secondP != null) {
-                    model[secondP.varName] = true
+                    model[secondP.varName] = !secondP.isNot //Fixed it here?
                 }
                 symbols.remove(secondP)
             }
