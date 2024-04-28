@@ -233,7 +233,6 @@ class BeliefBase {
         for (belief in beliefs){
             clauses.addAll(belief.CNF.disjunctions)
         }
-        //clauses.addAll(newBelief.CNF.disjunctions)
 
         for(belief in beliefs){
             for (disjunc in belief.CNF.disjunctions){
@@ -242,12 +241,7 @@ class BeliefBase {
                 }
             }
         }
-        /*
-        for (disjunc in newBelief.CNF.disjunctions){
-            literals.addAll(disjunc.variables)
-        }
 
-         */
         return DPLL(clauses, literals, model)!!
     }
 
