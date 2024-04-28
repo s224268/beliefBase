@@ -6,12 +6,18 @@ private class Disjunction(val disjunctionString: String){
         }
     }
     fun evaluate(map: Map<String, Boolean?>): Boolean?{
+        var falseVariableCounter = 0
         for (variable in variables){
             if (variable.evaluate(map)){
                 return true
+            } else if (variable.evaluate(map) == false){
+                falseVariableCounter++
             }
         }
-        return false
+        if (falseVariableCounter == variables.size){
+            return false
+        }
+        return null
     }
 }
 
@@ -180,8 +186,8 @@ class BeliefBase {
         do {
             val contradictingBeliefs = mutableSetOf<Belief>()
 
-            if (DPLL_satisfiable(newBelief)){
-                println("Here?")
+            if (!DPLL_satisfiable(newBelief)){
+                println("Model is not satisfiable:")
             }
 
         } while (false)
@@ -223,7 +229,9 @@ class BeliefBase {
                 }
             }
         }
-        for (newBe)
+        for (disjunc in newBelief.CNF.disjunctions){
+            literals.addAll(disjunc.variables)
+        }
         return DPLL(clauses, literals, model)!!
     }
 
@@ -311,16 +319,18 @@ class BeliefBase {
         }
 
 
+        //Exact problem here is that
         //P = FIRST(Symbols) [pick any?]
         //Rest = REST(symbols)
+
+        //ANTON MODIFIED THIS
         val thirdP = symbols.first()
         symbols.remove(thirdP)
-        val map1 = model.toMutableMap()
-        val map2 = model.toMutableMap()
-        map1.set(thirdP.varName, false)
-        map2.set(thirdP.varName, true)
+        val modelWherePTrue = model.toMutableMap()
+        val modelWherePFalse = model.toMutableMap()
+        modelWherePTrue.set(thirdP.varName, true)
+        modelWherePFalse.set(thirdP.varName, false)
+        return DPLL(clauses, symbols, modelWherePTrue) || DPLL(clauses, symbols, modelWherePFalse)
 
-        //return DPLL(clauses, rest, model U p=true) OR DPLL(clauses, rest, model U P=false)
-        return DPLL(clauses, symbols, map1) || DPLL(clauses, symbols, map2)
     }
 }

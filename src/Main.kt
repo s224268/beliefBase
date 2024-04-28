@@ -3,15 +3,15 @@ import CNF_Converter.toClass
 import java.lang.reflect.Type
 import kotlin.io.*
 fun main() {
-    val cnfList: List<CNFimported> = toClass(stringTo("NOT('d')"))
+
     val beliefBase: BeliefBase = BeliefBase()
-    println(cnfList[0].convert().simplify().toSAT())
-    beliefBase.giveBeliefString(cnfList[0].convert().simplify().toSAT())
-
-    println("\n\n\n")
-
-    val cnfList2: List<CNFimported> = toClass(stringTo("'d'"))
-    beliefBase.giveBeliefString(cnfList2[0].convert().simplify().toSAT())
+    giveBelief("OR('a','b')", beliefBase)
+    giveBelief("NOT('a')", beliefBase)
+    giveBelief("NOT('b')", beliefBase)
     beliefBase.printBeliefs()
+}
 
+fun giveBelief(input: String, beliefBase: BeliefBase){
+    val cnfList: List<CNFimported> = toClass(stringTo(input))
+    beliefBase.giveBeliefString(cnfList[0].convert().simplify().toSAT())
 }
