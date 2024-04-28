@@ -5,10 +5,9 @@ import kotlin.io.*
 fun main() {
 
     val beliefBase: BeliefBase = BeliefBase()
-    giveBelief("OR('a','b')", beliefBase)
+    giveBelief("OR('a','b','c')", beliefBase)
     giveBelief("NOT('a')", beliefBase)
     giveBelief("NOT('b')", beliefBase)
-    beliefBase.printBeliefs()
 }
 
 fun giveBelief(input: String, beliefBase: BeliefBase){

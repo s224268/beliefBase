@@ -1,14 +1,17 @@
-private class Disjunction(val disjunctionString: String){
+public val inconsistentBeliefs: MutableSet<Belief> = mutableSetOf()
+public class Disjunction(val disjunctionString: String, parentCNF: CNF){
+    val parent = parentCNF
     val variables: MutableList<Literal> = mutableListOf()
     init{
         for (literalString in disjunctionString.split('∨')){
-            variables.add(Literal(literalString))
+            variables.add(Literal(literalString, this))
         }
     }
     fun evaluate(map: Map<String, Boolean?>): Boolean?{
         var falseVariableCounter = 0
         for (variable in variables){
-            if (variable.evaluate(map)){
+            //return variable.evaluate(map)
+            if (variable.evaluate(map) == true){
                 return true
             } else if (variable.evaluate(map) == false){
                 falseVariableCounter++
@@ -24,13 +27,14 @@ private class Disjunction(val disjunctionString: String){
 /**
  * This is a conjunction
  */
-private class CNF(val CNFString: String) {
+public class CNF(val CNFString: String, parentBelief: Belief) {
+    val parent = parentBelief
     val disjunctions: MutableList<Disjunction> = mutableListOf()
     init{
         try{
             val stringList = CNFString.split('∧')
             for(disjunctionString in stringList){
-                disjunctions.add(Disjunction(disjunctionString))
+                disjunctions.add(Disjunction(disjunctionString, this))
             }
         } catch (e: KotlinNullPointerException){
             println("Invalid input")
@@ -50,7 +54,8 @@ private class CNF(val CNFString: String) {
     }
 }
 
-private class Literal(val literalString: String){
+public class Literal(val literalString: String, parentDisjunction: Disjunction){
+    val parent = parentDisjunction
     var varName: String = ""
     var isNot: Boolean = false
 
@@ -77,14 +82,14 @@ private class Literal(val literalString: String){
 /**
  * This function is basically confirmation basis, algorithmically
  */
-private fun getWorth(belief:Belief): Int{
+public fun getWorth(belief:Belief): Int{
     //TODO: We should ideally determine this based on number of entailments, but this works for now
     return belief.addedNumber
 }
 /**
  * Decides on which belief to remove.
  */
-private fun selectBeliefToRemove(contradictingBeliefs: Set<Belief>): Belief{
+public fun selectBeliefToRemove(contradictingBeliefs: Set<Belief>): Belief{
 
     //TODO The following is based on number of entailments/children.
     // We could, alternatively, just order them based on addedNumber if this is impractical
@@ -97,7 +102,7 @@ private fun selectBeliefToRemove(contradictingBeliefs: Set<Belief>): Belief{
 
 public class Belief(originalExpression: String) {
     val CNFString = originalExpression
-    var CNF: CNF = CNF(originalExpression)
+    var CNF: CNF = CNF(originalExpression, this)
 
     //addedNumber Is used to order the beliefs. Maybe we should just use a sorted list instead.
     //This is mainly for if we just remove the oldest belief first, which is dubious, but at the same time
@@ -183,58 +188,22 @@ class BeliefBase {
         giveBelief(Belief(newBeliefString))
     }
     private fun giveBelief(newBelief: Belief) {
-        do {
-            val contradictingBeliefs = mutableSetOf<Belief>()
-
-            if (!DPLL_satisfiable(newBelief)){
-                println("Model is not satisfiable:")
-            }
-
-        } while (false)
-        //The absolutely last things we do.
+        var inconsistent = false
         addBelief(newBelief)
-
-    }
-
-
-
-
-    /**
-     * Returns whether a belief is contradictory to the knowledge base. Not necessary for the assignment afaik
-     */
-    /*
-    public fun checkIfBeliefContradicts(beliefToCheck: Belief): Boolean{
-        for (belief in beliefs) {
-            if (contradicts(belief, beliefToCheck)) return true
-        }
-        return false
-    }
-
-     */
-
-    private fun DPLL_satisfiable(newBelief: Belief): Boolean{
-        val clauses: MutableSet<Disjunction> = mutableSetOf<Disjunction>()
-        val literals: MutableSet<Literal> = mutableSetOf<Literal>()
-        val model: MutableMap<String, Boolean?> = mutableMapOf()
-
-        for (belief in beliefs){
-            clauses.addAll(belief.CNF.disjunctions)
-        }
-        clauses.addAll(newBelief.CNF.disjunctions)
-
-        for(belief in beliefs){
-            for (disjunc in belief.CNF.disjunctions){
-                for(literal in disjunc.variables){
-                    literals.add(literal)
+        printBeliefs()
+        do {
+            if (!DPLL_satisfiable(newBelief)){
+                inconsistent = true
+                println("Model is not satisfiable. Following beliefs are inconsistent, and will be removed:")
+                for(belief in inconsistentBeliefs){
+                    println(belief.CNFString)
                 }
-            }
-        }
-        for (disjunc in newBelief.CNF.disjunctions){
-            literals.addAll(disjunc.variables)
-        }
-        return DPLL(clauses, literals, model)!!
-    }
+                beliefs.removeAll(inconsistentBeliefs)
+                printBeliefs()
+            } else inconsistent = false
 
+        } while (inconsistent)
+    }
     private fun allClausesTrue(clauses: Set<Disjunction>, model: Map<String, Boolean?>): Boolean {
         var truthCounter = 0
         for (clause in clauses) {
@@ -246,12 +215,40 @@ class BeliefBase {
     }
 
     private fun someClauseFalse(clauses: Set<Disjunction>, model: Map<String, Boolean?>): Boolean {
+        inconsistentBeliefs.clear()
         for (clause in clauses) {
             if (clause.evaluate(model) == false) {
+                inconsistentBeliefs.add(clause.parent.parent)
                 return true
             }
         }
         return false
+    }
+
+    private fun DPLL_satisfiable(newBelief: Belief): Boolean{
+        val clauses: MutableSet<Disjunction> = mutableSetOf<Disjunction>()
+        val literals: MutableSet<Literal> = mutableSetOf<Literal>()
+        val model: MutableMap<String, Boolean?> = mutableMapOf()
+
+        for (belief in beliefs){
+            clauses.addAll(belief.CNF.disjunctions)
+        }
+        //clauses.addAll(newBelief.CNF.disjunctions)
+
+        for(belief in beliefs){
+            for (disjunc in belief.CNF.disjunctions){
+                for(literal in disjunc.variables){
+                    literals.add(literal)
+                }
+            }
+        }
+        /*
+        for (disjunc in newBelief.CNF.disjunctions){
+            literals.addAll(disjunc.variables)
+        }
+
+         */
+        return DPLL(clauses, literals, model)!!
     }
 
     private fun DPLL(clauses: Set<Disjunction>, symbols: MutableSet<Literal>, model: MutableMap<String, Boolean?>): Boolean { //TODO: Remove kotlin.any
@@ -268,8 +265,8 @@ class BeliefBase {
 
         // iterate over strings in model. If any string is only presented one time, safely set it to true and check the model
         //P, value = FINDPURESYMBOL(symbol, clauses, model)
-        var P: Literal? = null
 
+        var P: Literal? = null
         for(literal in symbols) {
             var pure: Boolean = true
             var symbolsOfLiteral: List<Literal> =
