@@ -37,5 +37,6 @@ fun testMain(){
 
 fun giveBelief(input: String, beliefBase: BeliefBase){
     val cnfList: List<CNFimported> = toClass(stringTo(input))
+    println(cnfList[0].convert().simplify().toSAT())
     beliefBase.giveBeliefString(cnfList[0].convert().simplify().toSAT())
 }
